@@ -1,0 +1,33 @@
+name: Build Motel Vox macOS installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "MotelVox/**"
+      - ".github/workflows/build-macos.yml"
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        working-directory: MotelVox
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build AU and VST3
+        working-directory: MotelVox
+        run: cmake --build build --config Release --target MotelVox_AU MotelVox_VST3 --parallel 3
+
+      - name: Package installer
+        working-directory: MotelVox
+        run: bash installer/build-macos-installer.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MotelVox-macOS-installer
+          path: MotelVox/build/installer/*.pkg
+          if-no-files-found: error
